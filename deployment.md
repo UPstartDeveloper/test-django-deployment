@@ -245,10 +245,62 @@ For example, for the ```SECRET_KEY``` variable it will look something like this,
     ```
 
 ## Part 4: Bonus Section
+Congrats on making it through the first three parts of this guide! Now that you have done all this, all your future deployments will be much simpler. In fact, most of them won't need much more than another push to Heroku using Git, as long as they are changes to application code only.
+
+Now if you want to go ahead and build a *real* Django project to show to the world, here are a few suggestions of where to start:
+
+1. Add your MVC
+
+    As is, your production code has no content for a user to see. It will just display a 404 page when they land on the root directory of your site, since once you set ```DEBUG=False``` like we did previously, that is when Django starts replying on the application code you've written to handle HTTP requests.
+
+    This is opposed to the rocket ship page you see when you first tried running Django locally. That was merely provided by the makers of Django to help you when you were just starting out - but you're no longer just starting out! Go ahead and add the routes for your application.
+
+2. Code Quality in ```settings.py```
+
+    Although it technically offers no functional benefit, it is generally best practice to maintain your code's readability. This will help you in the long run to manage your "technical debt", which is a term used in industry to refer to the difficulty required to keep a piece of software up-to-date.
+
+    To do this, I personally like to do the following in my project settings module, so that it looks better (again, this is just my humble opinion):
+
+    - Set the ```TIME_ZONE``` setting equal to ```None```. Since the type of database we are using (which is PostgreSQL), already comes with support for time zone data, we do not need to specify any time zone for our project. Before doing this you should verify first that the ```USE_TZ``` setting is set to ```True``` (which is the default). For more details on this, please visit [the settings reference on the Django documentation](https://docs.djangoproject.com/en/3.0/ref/settings/).
+
+    - Reformat the ```AUTH_PASSWORD_VALIDATORS``` setting to comply with Pep 8
+
+        The Pep 8 is a collection of best practices which all Python programmers should follow, in order to make their code as readable as possible (you can find the whole guide online [here](https://www.python.org/dev/peps/pep-0008/#introduction))!
+
+        One of the conventions in the guide si to make sure all lines in your code don't exceed 80 characters. Unfortunately, the Django settings module doesn't follow this rule out of the box. 
+
+        In an effort to preserve Pep 8 compliant line length as well as readability, I suggest making the following changes to the ```AUTH_PASSWORD_VALIDATORS``` section:
+
+        1. Store the names of the validators in separate variables (use parentheses to make these line less than 80 characters as well)
+        2. Simply use the variable names in the place of the actual strings themselves, in the actual dictionary used to set the ```AUTH_PASSWORD_VALIDATORS``` variable
+
+        To my knowledge this approach will not change the performance of your code. By the end, the goal of this approach is to have something like the following:
+
+
+    ```python
+    VALIDATOR_1 = (
+    'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'
+    )
+    VALIDATOR_2 = (
+    'django.contrib.auth.password_validation.MinimumLengthValidator'
+    )
+    VALIDATOR_3 = (
+    'django.contrib.auth.password_validation.CommonPasswordValidator'
+    )
+    VALIDATOR_4 = (
+    'django.contrib.auth.password_validation.NumericPasswordValidator'
+    )
+    AUTH_PASSWORD_VALIDATORS = [
+    {'NAME': VALIDATOR_1},
+    {'NAME': VALIDATOR_2},
+    {'NAME': VALIDATOR_3},
+    {'NAME': VALIDATOR_4},
+    ]
+    ```
 
 ## Extra Resources
 
-I hope that was helpful! Now you should check out whatever URL your project is now live on, to make sure it actually works. If it doesn't work - don't lose hope! Pushing to prod is a skill earned through perseverance (like all great skills). Please check out the following in order to help you debug whatever issues may still remain in your deployment:
+I hope that was helpful! Now you should check out whatever URL your project is now live on, to make sure it actually works. If it doesn't work - don't lose hope! Pushing to production is a skill earned through perseverance (like all great skills). Please check out the following in order to help you debug whatever issues may still remain in your deployment:
 
 1. The Heroku logs: enter ```heroku logs --tail``` into your CLI.
 2. Check out the guides on [Django Deployment](https://make-school-courses.github.io/BEW-1.2-Authentication-and-Associations/#/Lessons/11-Deployment?id=60m--guided-tour-deploy-tutorial-on-heroku) and [Provisioning a Remote Database on Heroku](https://make-school-courses.github.io/BEW-1.2-Authentication-and-Associations/#/./Lessons/HowTo-DeployWithPostgres) from the BEW 1.2 class at Make School.
