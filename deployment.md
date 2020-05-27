@@ -25,14 +25,14 @@ This tutorial **assumes** the following:
 
 2. Clone the repo on GitHub onto your local machine.
     *(optional)*: at this step, you can add a few files to the ```.gitignore``` if you like:
-    - if you're on macOS, you can add ```.DS_Store``` 
+    - if you're on macOS, you can add ```.DS_Store```
     - if you use Visual Studio Code, you can also add ```.vscode```
     Again you don't have to do this step, but *it just makes sense*, because these files don't actually do anything to meaningfully add/detract from your deployment.
 3. Create a Python 3 virtual environment. Name it something that's on the ```.gitignore```, such as ```env```.
    For example the command you type into the CLI may look like this:
    ```python3 -m venv env```
    If you make a mistake here, that's okay. You can simply delete whatever folder was created on your filesystem (it will have the same name whatever you put after ```venv``` above), and try again.
-   **NOTE**: if you want your virtual environment to be in Python 3, then enter this command using ```python3```. Afterwards once you are in your virtual environment, you will only need to use ```python``` (or you could just set an alias in your ```PATH``` but that's outside the scope of this tutorial. 
+   **NOTE**: if you want your virtual environment to be in Python 3, then enter this command using ```python3```. Afterwards once you are in your virtual environment, you will only need to use ```python``` (or you could just set an alias in your ```PATH``` but that's outside the scope of this tutorial.
 4. Activate the said Python virutal environment. **Remain in the virtual environment for every following step!**
    Assuming you created your virtual environment like we did in Step 3, then you can simply enter: ```source env/bin activate```
 5. Install the ```Django``` package. Explictly tell which Python interpreter you want to install the library with (it should be the one you're using for the virtual environment) by prefixing your ```pip install``` command with ```python -m```. The whole command may look something like this, for example:
@@ -67,7 +67,9 @@ For example, for the ```SECRET_KEY``` variable it will look something like this,
     SECRET_KEY = str(os.getenv('SECRET_KEY`)) # the string will be whatever key you put in .env
     ```
 
-4. The next step is to create a new PostgreSQL database locally for this project, and that modify the ```DATABASES``` setting accordingly. You can find more info on how to format this setting on the [Django documentation](https://docs.djangoproject.com/en/3.0/ref/settings/#databases), and it should roughly look something like this:
+4. The next step is to create a new PostgreSQL database locally for this project, and that modify the ```DATABASES``` setting accordingly. Go into your ```psql``` terminal and create a new database for your project now, using the ```CREATE DATABASE <db_name>;``` command (and don't forget that semi-colon!More info: [W3Schools](https://www.w3schools.com/SQl/sql_create_db.asp) and the [PostgreSQL documentation](https://www.postgresql.org/docs/).
+
+5. You can find more info on how to format this setting on the [Django documentation](https://docs.djangoproject.com/en/3.0/ref/settings/#databases), and it should roughly look something like this:
 
     ```python
     DATABASES = {
@@ -84,7 +86,93 @@ For example, for the ```SECRET_KEY``` variable it will look something like this,
 
     Notice in the code above, we have a new environment variable called ```DATABASE_PASSWORD```. Make sure to add a key-value pair for it in ```.env```!
 
-5. 
+6. Hold up! We have just set a PostgreSQL database in our *local* environment, not Heroku. We will use this later in order to check that the application code itself is working ok. But for right nowm let's set about **creating a Heroku app**, and provisioning a **remote database for production** (note: this step is technically *optional* for really small project):
+
+## Part 3: Onward to Heroku
+
+1. Create a new Heroku app, name it whatever you want. Verify it is created correctly by visiting the URL the Heroku CLI gives you.
+
+    There shouldn't be anything too fancy on this page yet, apart from this welcome message from Heroku:
+    ![Screenshot Heroku Welcome Message Goes Here](https://i.postimg.cc/50Y16Ms8/Screen-Shot-2020-05-27-at-11-05-41-AM.png)
+
+2. Set a remote git branch to Heroku, using the following command, taken from the [Heroku Dev Center](https://devcenter.heroku.com/articles/git):
+
+    ```python
+    heroku git:remote -a <name of your Heroku app>
+    ```
+
+    Once you have completed this step, verify you have a remote branch to Heroku by entering the command ```git remote -v``` into your CLI.
+
+3. Now it's take to on the database side of things. This can get really hairy, but for our purposes today we'll just use 3rd party libraries to show you the simplest use case of a PostgreSQL database for your Django app.
+
+    Install the following libraries via the following commands with ```pip```:
+    - ```psycopg2-binary```
+    - ```dj-database-url```
+
+4. Import ```dj_database_url``` at the beginning portion of your project settings file.
+
+    Then, add the following to the bottom the same file:
+
+    ```python
+    db_from_env = dj_database_url.config()
+    DATABASES['default'].update(db_from_env)
+
+5. You should now be able to test your app running locally. Verify that there are no errors in your application code now, by running your database migrations and the server on your local machine:
+
+    ```bash
+    python manage.py migrate
+    python manage.py runserver
+    ```
+
+6. Go back to your ```settings.py``` module now, and edit the ```ALLOWED_HOSTS``` setting to allow Heroku to host your app once it has been push:
+
+    For example, if your Heroku app is named "uniqueprojectname", then what you'll put for this setting is the following:
+
+    ```python
+     ALLOWED_HOSTS = [
+         'localhost',
+         'uniqueprojectname.herokuapp.com',
+    ]
+    ```
+
+7. Set up your ```STATIC_ROOT``` which will tell Heroku where to collect all your static assets (HTML, CSS, and JavaScript files) in production.
+
+    Add this line somewhere in ```settings.py```, preferably below where the ```STATIC_URL``` is located:
+
+    ```python
+    STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+    ```
+
+8. With all the above being done, you are nearly ready to deploy your app to Heroku. We just need to do a few more things to ensure consistency between your local and production environment. Fortunately, this process can also be expedited using yet *another 3rd party library.*
+
+    - Install the ```django-heroku``` package now via ```pip```:
+
+    ```python -m pip install django-heroku```
+    - Following a process similar to what we did for the ```dj-database-urls``` packages, you should now import ```django-heroku``` at the top of the project settings module. Then at the bottom of the file, you need to call a specific function from the package like so. According to this page on the [Heroku documentation](https://devcenter.heroku.com/articles/django-app-configuration), this will "automatically configures your Django application to work on Heroku":
+
+        ```python
+        # other imports
+        import django_heroku
+        # rest of the file
+        django_heroku.settings(locals())
+        ```
+
+9. Install the ```gunicorn``` package now as well, via ```pip```. The details of why you need this are outside the scope of this tutorial; but suffice to say Gunicorn (aka "Green Unicorn") will help the Python code to play nice with the configurations in the WSGI module, as well as HTTP.
+
+    ```bash
+    python -m pip install gunicorn
+    ```
+
+10. Procfile
+11. remote settings
+
+12. requirements
+
+13. push
+
+14. scale
+
+## Part 4: Bonus Section
 
 ## Extra Resources
 

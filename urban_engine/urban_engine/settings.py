@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 from dotenv import load_dotenv
+import dj_database_url
+import django_heroku
 
 load_dotenv()
 
@@ -28,7 +30,11 @@ SECRET_KEY = os.getenv('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', False)
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'localhost',
+    'test-django-zr.herokuapp.com',
+    '127.0.0.1',
+]
 
 
 # Application definition
@@ -125,3 +131,11 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/3.0/howto/static-files/
 
 STATIC_URL = '/static/'
+
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
+
+# Deployment-ready settings
+db_from_env = dj_database_url.config()
+DATABASES['default'].update(db_from_env)
+django_heroku.settings(locals())
