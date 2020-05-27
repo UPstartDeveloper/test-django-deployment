@@ -124,6 +124,8 @@ For example, for the ```SECRET_KEY``` variable it will look something like this,
     python manage.py runserver
     ```
 
+    If you want, after this step you are free to commit to GitHub as you like, since your secrets are now safe.
+
 6. Go back to your ```settings.py``` module now, and edit the ```ALLOWED_HOSTS``` setting to allow Heroku to host your app once it has been push:
 
     For example, if your Heroku app is named "uniqueprojectname", then what you'll put for this setting is the following:
@@ -163,14 +165,42 @@ For example, for the ```SECRET_KEY``` variable it will look something like this,
     python -m pip install gunicorn
     ```
 
-10. Procfile
-11. remote settings
+10. Procfile: this file is **crucial** to letting Heroku know that you are trying to deploy a Django app in the first place! On the same level in your repo as the ```manage.py```, add a file named ```Procfile``` exactly (no file extension).
 
-12. requirements
+    In the ```Procfile``` add the following line, so that 1) Heroku knows you are trying to deploy a Django project, and 2) you will be able to see the Heroku logs in your CLI if something breaks
 
-13. push
+    ```txt
+    web: gunicorn projectname.wsgi --log-file -
+    ```
 
-14. scale
+    **NOTE**: you DO NOT place "projectname" in your Procfile, when you are doing this for your Procfile. The above is just an example. The thing you should actually place above for the "projectname" should be the same as what you named your Django project back in Part 1. This will also be the same as the name of your outer and inner project directories.
+
+11. Required Dependencies: on the same level of your project as the ```Procfile``` you also need a way to tell Heroku all of the libraries you're using (and that should be several by now)! Fortunately, if you have following all the other steps so far whilst in your Python virtual environment, you can create a ```requirements.txt``` file, and list all the dependencies your Django project uses (and nothing more) with the follwing command:
+
+    ```zsh
+    python -m pip freeze > requirements.txt
+    ```
+
+12. Push to Heroku: yes, you read that right! It is time for the moment of truth. A couple of things to note here:
+
+    - When you push, Heroku expects the ```Procfile``` to be at the top-level of what files you push. 
+    - So to make sure we encapsulate all those files and nothing more, navigate your CLI to one level above the Procfile, and then push everything below that level using the ```git subtree``` command:
+
+        ```bash
+        git add .
+        git commit -m "Deploy to Heroku."
+        git subtree push --prefix projectname heroku master
+        ```
+
+    - As always, remember to substitute ```projectname``` with the name of your specific Django project (same as the name of your project directory).
+
+13. Remote Settings
+
+14. Add-Ons
+
+15. Run Database Migrations on Heroku
+
+16. Scale
 
 ## Part 4: Bonus Section
 
