@@ -181,9 +181,25 @@ For example, for the ```SECRET_KEY``` variable it will look something like this,
     python -m pip freeze > requirements.txt
     ```
 
-12. Push to Heroku: yes, you read that right! It is time for the moment of truth. A couple of things to note here:
+12. Remote Settings: before you are fully ready to deploy to Heroku, you want to make sure your production environment has the environment values as your local environment.
 
-    - When you push, Heroku expects the ```Procfile``` to be at the top-level of what files you push. 
+    The way to do this in the context of Heroku is by setting *configuration variables* on your Heroku app (which is just a fancy alias for "environment variables").
+
+    At this point, you should have at least 3 environment variables: ```DEBUG```, ```SECRET_KEY```, and ```DATABASE_PASSWORD```. The way for us to give these same key-value pairs to our Heroku app is through a special CLI command: ```heroku config```!
+
+    **NOTE**: you could also set configuration variables through your Personal Dashboard on the Heroku website. But we'll be using the CLI here, since it is less intuitive and therefore needs more explanation.
+
+    To add/change a config variable on your Heroku app, use the following command:
+
+    ```bash
+    heroku config: set KEY=VALUE
+    ```
+
+    You will not need to use this command on the ```DEBUG``` variable, because it will already default to ```False``` if you have done all the previous steps correctly. Also, keep in mind that you *will* need to include quote marks, when you're entering strings as values for your environment variables (namely, for your ```SECRET_KEY``` and ```DATABASE_PASSWORD``` variables).
+
+13. Push to Heroku: yes, you read that right! It is time for the moment of truth. A couple of things to note here:
+
+    - When you push, Heroku expects the ```Procfile``` to be at the top-level of the files you push.
     - So to make sure we encapsulate all those files and nothing more, navigate your CLI to one level above the Procfile, and then push everything below that level using the ```git subtree``` command:
 
         ```bash
@@ -194,13 +210,39 @@ For example, for the ```SECRET_KEY``` variable it will look something like this,
 
     - As always, remember to substitute ```projectname``` with the name of your specific Django project (same as the name of your project directory).
 
-13. Remote Settings
-
 14. Add-Ons
+    Okay great, so you just pushed a ton of application code over to Heroku... so the site should be working okay now, right?
+
+    Not quite! We still need to take care of our database. On our local machine, we simply had to use Postgres.app - the analogous way to add a PostgreSQL database to Heroku will be to use one of Heroku many *add-ons*!
+
+    Heroku actually requires you to use a PostgreSQL database for your Django project in production, and the way you can install a free database to do just that is by entering the following command in your CLI, on the same level as the ```Procfile``` in your file structure:
+
+    ```bash
+    heroku addons:create heroku-postgresql:hobby-dev
+    ```
+
+    The good news is we already developed our application like it was meant for PostgreSQL, by doing all the stuff related to ```dj-database-url``` and ```psycopg2``` above. You can read more about why this tool is important, but suffice to say they have made it so your code needs nothing else to work with PostgreSQL in a production environment - it's just that up till now, there was now production database with which to actually connect.
 
 15. Run Database Migrations on Heroku
 
+    Just like we run database migrations locally, we also need to run them in production. After you push to Heroku, you should also be sure to run the following command, in order to make sure any changes you need to make to the database are kept with on Heroku (this happens now since we just started a new project, and commonly occurs whenever you make changes to your Django models):
+
+    ```zsh
+    heroku run python manage.py migrate
+    ```
+
 16. Scale
+
+    Last but not least!
+    Your Heroku app is able to run right now because of what are called *dynos*: you can think of these guys as like little containers for your app. Just like the box you need to ship large items in the mail, your Heroku dynos give your app everything it needs (computing power, RAM, etc.) in order for it to be safely shipped to your users.
+
+    Your Heroku account will have a monthly quota of free dyno hours for you every month; as long as your app's traffic stays below a certain amount of traffic, you will be able to use the service for free!
+
+    So for now, go ahead and scale your Heroku app up to 1 dyno, so that it doesn't take so long to load in production:
+
+    ```zsh
+    heroku ps:scale web=1
+    ```
 
 ## Part 4: Bonus Section
 
@@ -212,4 +254,4 @@ I hope that was helpful! Now you should check out whatever URL your project is n
 2. Check out the guides on [Django Deployment](https://make-school-courses.github.io/BEW-1.2-Authentication-and-Associations/#/Lessons/11-Deployment?id=60m--guided-tour-deploy-tutorial-on-heroku) and [Provisioning a Remote Database on Heroku](https://make-school-courses.github.io/BEW-1.2-Authentication-and-Associations/#/./Lessons/HowTo-DeployWithPostgres) from the BEW 1.2 class at Make School.
 3. Read the [Heroku documentation](https://devcenter.heroku.com/articles/deploying-python) on deploying Django apps to the platform.
 
-If you have comments, questions, or any other feedback for this gist please reach out to the author to suggest changes!
+If you have comments, questions, or any other feedback for this guide please reach out to the author to suggest changes!
